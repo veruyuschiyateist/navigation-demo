@@ -24,6 +24,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.plko.bls.app.R
+import com.plko.bls.app.ui.components.ItemDetails
+import com.plko.bls.app.ui.components.ItemDetailsState
 import com.plko.bls.app.ui.screens.AddItemRoute
 import com.plko.bls.app.ui.screens.EventConsumer
 import com.plko.bls.app.ui.screens.LocalNavController
@@ -52,41 +54,16 @@ fun AddItemContent(
     screenState: AddItemViewModel.ScreenState,
     onAddButtonClicked: (String) -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        var inputText by rememberSaveable {
-            mutableStateOf("")
-        }
-        OutlinedTextField(
-            value = inputText,
-            onValueChange = { inputText = it },
-            placeholder = {
-                Text(
-                    text = stringResource(R.string.enter_new_item)
-                )
-            },
-            enabled = screenState.isTextInputEnabled
-        )
-        Spacer(
-            modifier = Modifier.height(12.dp)
-        )
-        Button(
-            onClick = { onAddButtonClicked(inputText) },
-            enabled = screenState.isAddButtonEnabled(inputText),
-        ) {
-            Text(text = stringResource(R.string.add))
-        }
-        Box(
-            modifier = Modifier.size(32.dp)
-        ) {
-            if (screenState.isProgressVisible) {
-                CircularProgressIndicator(Modifier.fillMaxSize())
-            }
-        }
-    }
+    ItemDetails(
+        state = ItemDetailsState(
+            loadedItem = "",
+            textFieldPlaceholder = stringResource(R.string.enter_new_item),
+            actionButtonText = stringResource(R.string.add),
+            isActionInProgress = screenState.isProgressVisible
+        ),
+        onActionButtonClicked = onAddButtonClicked,
+        modifier = Modifier.fillMaxSize()
+    )
 }
 
 @Preview(showSystemUi = true)

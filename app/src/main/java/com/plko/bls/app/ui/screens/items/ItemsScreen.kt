@@ -6,13 +6,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -21,10 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.plko.bls.app.ui.screens.AddItemRoute
+import com.plko.bls.app.model.LoadResult
+import com.plko.bls.app.ui.components.LoadResultContent
 import com.plko.bls.app.ui.screens.EditItemRoute
 import com.plko.bls.app.ui.screens.LocalNavController
-import com.plko.bls.app.ui.screens.edit.EditItemScreen
 
 @Composable
 fun ItemsScreen() {
@@ -33,10 +28,7 @@ fun ItemsScreen() {
     val screenState = viewModel.stateFlow.collectAsState()
 
     ItemsContent(
-        getScreenState = { screenState.value },
-        onLaunchAddItemScreen = {
-            navController.navigate(AddItemRoute)
-        },
+        getLoadResult = { screenState.value },
         onItemClicked = { idx ->
             navController.navigate(EditItemRoute(idx))
         }
@@ -45,59 +37,35 @@ fun ItemsScreen() {
 
 @Composable
 fun ItemsContent(
-    getScreenState: () -> ItemsViewModel.ScreenState,
-    onLaunchAddItemScreen: () -> Unit,
+    getLoadResult: () -> LoadResult<ItemsViewModel.ScreenState>,
     onItemClicked: (Int) -> Unit
 ) {
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        when (val screenState = getScreenState()) {
-            ItemsViewModel.ScreenState.Loading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
 
-            is ItemsViewModel.ScreenState.Success -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    itemsIndexed(screenState.items) { idx, item ->
-                        Text(
-                            text = item,
-                            modifier = Modifier
-                                .clickable { onItemClicked(idx) }
-                                .fillMaxWidth()
-                                .padding(12.dp)
-                        )
-                    }
+    LoadResultContent(
+        loadResult = getLoadResult(),
+        content = { screenState ->
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                itemsIndexed(screenState.items) { idx, item ->
+                    Text(
+                        text = item,
+                        modifier = Modifier
+                            .clickable { onItemClicked(idx) }
+                            .fillMaxWidth()
+                            .padding(12.dp)
+                    )
                 }
             }
         }
-
-        FloatingActionButton(
-            onClick = {
-                onLaunchAddItemScreen.invoke()
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 16.dp, end = 16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null
-            )
-        }
-    }
+    )
 }
 
 @Preview(showSystemUi = true)
 @Composable
 private fun ItemsPreview() {
     ItemsContent(
-        getScreenState = { ItemsViewModel.ScreenState.Loading },
-        onLaunchAddItemScreen = {},
+        getLoadResult = { LoadResult.Loading },
         onItemClicked = {}
     )
 }

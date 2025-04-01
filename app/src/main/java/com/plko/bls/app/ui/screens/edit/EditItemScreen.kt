@@ -1,19 +1,21 @@
 package com.plko.bls.app.ui.screens.edit
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.plko.bls.app.R
+import com.plko.bls.app.model.LoadResult
+import com.plko.bls.app.ui.components.ItemDetails
+import com.plko.bls.app.ui.components.ItemDetailsState
+import com.plko.bls.app.ui.components.LoadResultContent
 import com.plko.bls.app.ui.screens.EditItemRoute
 import com.plko.bls.app.ui.screens.EventConsumer
 import com.plko.bls.app.ui.screens.LocalNavController
+import com.plko.bls.app.ui.screens.edit.EditItemViewModel.ScreenState
 import com.plko.bls.app.ui.screens.routeClass
 
 @Composable
@@ -27,40 +29,43 @@ fun EditItemScreen(index: Int) {
             navController.popBackStack()
         }
     }
-    val screenState by viewModel.stateFlow.collectAsState()
+    val loadResult by viewModel.stateFlow.collectAsState()
 
     EditItemContent(
-        state = screenState,
+        loadResult = loadResult,
         onEditButtonClicked = viewModel::update
     )
 }
 
 @Composable
 fun EditItemContent(
-    state: EditItemViewModel.ScreenState,
+    loadResult: LoadResult<ScreenState>,
     onEditButtonClicked: (String) -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        when (state) {
-            EditItemViewModel.ScreenState.Loading -> {
-                CircularProgressIndicator()
-            }
-
-            is EditItemViewModel.ScreenState.Success -> {
-
-            }
+    LoadResultContent(
+        loadResult = loadResult,
+        content = { screenState ->
+            SuccessEditItemContent(
+                state = screenState,
+                onEditButtonClicked = onEditButtonClicked
+            )
         }
-    }
+    )
 }
 
 @Composable
 fun SuccessEditItemContent(
-    state: EditItemViewModel.ScreenState.Success,
+    state: ScreenState,
     onEditButtonClicked: (String) -> Unit
 ) {
-
+    ItemDetails(
+        state = ItemDetailsState(
+            loadedItem = state.loadedItem,
+            textFieldPlaceholder = stringResource(R.string.edit_item),
+            actionButtonText = stringResource(R.string.edit_item),
+            isActionInProgress = state.isEditInProgress
+        ),
+        onActionButtonClicked = onEditButtonClicked,
+        modifier = Modifier.fillMaxSize()
+    )
 }

@@ -1,8 +1,10 @@
 package com.plko.bls.app.ui.screens.edit
 
+import android.transition.Scene
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.plko.bls.app.model.ItemsRepository
+import com.plko.bls.app.model.LoadResult
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -19,8 +21,9 @@ class EditItemViewModel @AssistedInject constructor(
     private val itemsRepository: ItemsRepository
 ) : ViewModel() {
 
-    private val stateMutableFlow = MutableStateFlow<ScreenState>(ScreenState.Loading)
+    private val stateMutableFlow = MutableStateFlow<LoadResult<ScreenState>>(LoadResult.Loading)
     val stateFlow = stateMutableFlow.asStateFlow()
+
 
     private val _exitChannel = Channel<Unit>()
     val exitChannel: ReceiveChannel<Unit> = _exitChannel
@@ -29,30 +32,35 @@ class EditItemViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val loadedItem = itemsRepository.getItem(index)
 
-            stateMutableFlow.value = ScreenState.Success(loadedItem)
+            stateMutableFlow.value = LoadResult.Success(ScreenState(loadedItem))
         }
     }
 
     fun update(newValue: String) {
-        val currentState = stateMutableFlow.value
-        if (currentState !is ScreenState.Success) return
+        val loadResult = stateMutableFlow.value
+        if (loadResult !is LoadResult.Success) return
 
         viewModelScope.launch {
-            stateMutableFlow.value = currentState.copy(isEditInProgress = true)
+            showProgress(loadResult)
             itemsRepository.update(index, newValue)
-            _exitChannel.send(Unit)
+            goBack()
         }
     }
 
-
-    sealed class ScreenState {
-        data object Loading : ScreenState()
-
-        data class Success(
-            val loadedItem: String,
-            val isEditInProgress: Boolean = false
-        ) : ScreenState()
+    private fun showProgress(loadResult: LoadResult.Success<ScreenState>) {
+        val currentScreenState = loadResult.data
+        val updatedScreenState = currentScreenState.copy(isEditInProgress = true)
+        stateMutableFlow.value = LoadResult.Success(updatedScreenState)
     }
+
+    private suspend fun goBack() {
+        _exitChannel.send(Unit)
+    }
+
+    data class ScreenState(
+        val loadedItem: String,
+        val isEditInProgress: Boolean = false
+    )
 
     @AssistedFactory
     interface Factory {
