@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.plko.bls.app.model.ItemsRepository
 import com.plko.bls.app.model.LoadResult
+import com.plko.bls.app.ui.screens.action.ActionViewModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -19,42 +20,18 @@ import kotlinx.coroutines.launch
 class EditItemViewModel @AssistedInject constructor(
     @Assisted private val index: Int,
     private val itemsRepository: ItemsRepository
-) : ViewModel() {
+) : ViewModel(), ActionViewModel.Delegate<EditItemViewModel.ScreenState, String> {
 
-    private val stateMutableFlow = MutableStateFlow<LoadResult<ScreenState>>(LoadResult.Loading)
-    val stateFlow = stateMutableFlow.asStateFlow()
-
-
-    private val _exitChannel = Channel<Unit>()
-    val exitChannel: ReceiveChannel<Unit> = _exitChannel
-
-    init {
-        viewModelScope.launch {
-            val loadedItem = itemsRepository.getItem(index)
-
-            stateMutableFlow.value = LoadResult.Success(ScreenState(loadedItem))
-        }
+    override suspend fun loadState(): ScreenState {
+        return ScreenState(loadedItem = itemsRepository.getItem(index))
     }
 
-    fun update(newValue: String) {
-        val loadResult = stateMutableFlow.value
-        if (loadResult !is LoadResult.Success) return
-
-        viewModelScope.launch {
-            showProgress(loadResult)
-            itemsRepository.update(index, newValue)
-            goBack()
-        }
+    override fun showProgress(input: ScreenState): ScreenState {
+        return input.copy(isEditInProgress = true)
     }
 
-    private fun showProgress(loadResult: LoadResult.Success<ScreenState>) {
-        val currentScreenState = loadResult.data
-        val updatedScreenState = currentScreenState.copy(isEditInProgress = true)
-        stateMutableFlow.value = LoadResult.Success(updatedScreenState)
-    }
-
-    private suspend fun goBack() {
-        _exitChannel.send(Unit)
+    override suspend fun execute(action: String) {
+        itemsRepository.update(index, action)
     }
 
     data class ScreenState(

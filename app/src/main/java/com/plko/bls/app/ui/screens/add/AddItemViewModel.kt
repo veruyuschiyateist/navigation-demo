@@ -3,6 +3,7 @@ package com.plko.bls.app.ui.screens.add
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.plko.bls.app.model.ItemsRepository
+import com.plko.bls.app.ui.screens.action.ActionViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -17,31 +18,21 @@ import javax.inject.Inject
 @HiltViewModel
 class AddItemViewModel @Inject constructor(
     private val itemsRepository: ItemsRepository
-) : ViewModel() {
+) : ViewModel(), ActionViewModel.Delegate<AddItemViewModel.ScreenState, String> {
 
-    private val stateMutableFlow = MutableStateFlow(ScreenState())
-    val stateFlow: StateFlow<ScreenState> = stateMutableFlow.asStateFlow()
+    override suspend fun loadState(): ScreenState {
+        return ScreenState()
+    }
 
-    private val _exitChannel = Channel<Unit>()
-    val exitChannel: ReceiveChannel<Unit> = _exitChannel
+    override fun showProgress(input: ScreenState): ScreenState {
+        return input.copy(isProgressVisible = true)
+    }
 
-    fun add(title: String) {
-        viewModelScope.launch {
-            stateMutableFlow.update { it.copy(isAddInProgress = true) }
-            itemsRepository.add(item = title)
-            _exitChannel.send(Unit)
-        }
+    override suspend fun execute(action: String) {
+        itemsRepository.add(action)
     }
 
     data class ScreenState(
-        private val isAddInProgress: Boolean = false
-    ) {
-
-        val isTextInputEnabled: Boolean get() = !isAddInProgress
-        val isProgressVisible: Boolean get() = isAddInProgress
-
-        fun isAddButtonEnabled(input: String): Boolean {
-            return input.isNotEmpty() && !isAddInProgress
-        }
-    }
+        val isProgressVisible: Boolean = false
+    )
 }

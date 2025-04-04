@@ -29,24 +29,19 @@ import com.plko.bls.app.ui.components.ItemDetailsState
 import com.plko.bls.app.ui.screens.AddItemRoute
 import com.plko.bls.app.ui.screens.EventConsumer
 import com.plko.bls.app.ui.screens.LocalNavController
+import com.plko.bls.app.ui.screens.action.ActionScreen
 import com.plko.bls.app.ui.screens.routeClass
 
 @Composable
 fun AddItemScreen() {
     val viewModel: AddItemViewModel = hiltViewModel()
-    val screenState = viewModel.stateFlow.collectAsState()
 
-    AddItemContent(
-        screenState = screenState.value,
-        onAddButtonClicked = viewModel::add
-    )
-
-    val navController = LocalNavController.current
-    EventConsumer(viewModel.exitChannel) {
-        if (navController.currentBackStackEntry?.routeClass() == AddItemRoute::class) {
-            navController.popBackStack()
+    ActionScreen(
+        delegate = viewModel,
+        content = { (screenState, onExecuteAction) ->
+            AddItemContent(screenState, onExecuteAction)
         }
-    }
+    )
 }
 
 @Composable
