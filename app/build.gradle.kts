@@ -71,4 +71,6 @@ dependencies {
 
     implementation(libs.org.jetbrains.kotlinx.serialization.core)
 
+    implementation(libs.kotlinx.collections.immutable)
+
 }

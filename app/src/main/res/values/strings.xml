@@ -5,4 +5,6 @@
     <string name="items">Items</string>
     <string name="add_item">Add item</string>
     <string name="edit_item">Edit item</string>
+    <string name="settings_screen">Settings</string>
+    <string name="profile_screen">Profile</string>
 </resources>
